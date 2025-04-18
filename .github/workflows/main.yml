@@ -3,10 +3,10 @@ name: Custom bar widget
 on:
   push:
     branches:
-      - main  
+      - main
 
 permissions:
-  contents: write 
+  contents: write
 
 jobs:
   build-and-deploy:
@@ -19,17 +19,17 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '8.0.x'  
+          dotnet-version: '8.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore src 
+        run: dotnet restore src/NotUndeserved.Twitch.CustomProgBar
 
-      - name: Build the project
-        run: dotnet publish src -c Release -o deploy/wwwroot
+      - name: Publish Blazor WebAssembly app
+        run: dotnet publish src/NotUndeserved.Twitch.CustomProgBar -c Release -o deploy/wwwroot /p:StaticWebAssetBasePath=/NotUndeserved.CustomBar
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          branch: gh-pages  # GitHub Pages branch
-          folder: deploy/wwwroot  # Path to the published Blazor WASM files
-          clean: true  # Remove old files before deployment
+          branch: gh-pages
+          folder: deploy/wwwroot
+          clean: true
