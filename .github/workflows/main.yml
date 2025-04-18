@@ -1,0 +1,35 @@
+name: Custom bar widget
+
+on:
+  push:
+    branches:
+      - main  
+
+permissions:
+  contents: write 
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'  
+
+      - name: Restore dependencies
+        run: dotnet restore src 
+
+      - name: Build the project
+        run: dotnet publish src -c Release -o deploy/wwwroot
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages  # GitHub Pages branch
+          folder: deploy/wwwroot  # Path to the published Blazor WASM files
+          clean: true  # Remove old files before deployment
