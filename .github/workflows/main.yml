@@ -25,11 +25,11 @@ jobs:
         run: dotnet restore src/NotUndeserved.Twitch.CustomProgBar
 
       - name: Publish Blazor WebAssembly app
-        run: dotnet publish src/NotUndeserved.Twitch.CustomProgBar -c Release -o deploy/wwwroot /p:StaticWebAssetBasePath=/NotUndeserved.CustomBar
+        run: dotnet publish src/NotUndeserved.Twitch.CustomProgBar -c Release -o deploy /p:StaticWebAssetBasePath=/NotUndeserved.CustomBar
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
-          folder: deploy/wwwroot
+          folder: deploy
           clean: true
