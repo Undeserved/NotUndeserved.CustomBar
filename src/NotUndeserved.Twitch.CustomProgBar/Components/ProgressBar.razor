@@ -1,0 +1,56 @@
+﻿@inject IJSRuntime JS
+@inject State.ProgressState ProgressState
+
+@if (!string.IsNullOrEmpty(barBackgroundUrl))
+{
+    <div class="progress-bar-container" style="position: relative; width: 64px; height: 512px;">
+        <!-- Background Image -->
+        <img src="@barBackgroundUrl" class="progress-bar" alt="Progress Bar Background"
+        style="
+                    width: 64px; 
+                    height: 512px;
+                    background-color: transparent;
+                    box-shadow: none;" />
+
+        @if (!string.IsNullOrEmpty(dialUrl)) {
+            <!-- Movable Dial Image -->
+            <img src="@dialUrl" 
+            alt="dial"
+            class="dial"
+            style="
+                    position: absolute;
+                    left: 16px;
+                    width: 32px;
+                    height: 32px;
+                    transition: top 0.3s ease;
+                    background-color: transparent;
+                    box-shadow: none;
+                    top: @DialTopPosition%;
+            " />
+        }
+    </div>
+}
+
+@code{
+    private string? barBackgroundUrl;
+    private string? dialUrl;
+
+    private double DialTopPosition => Math.Max(100 - ProgressState.FillPercentage - (100.0 / (2 * ProgressState.Sections)) - 3.125, 0);
+
+    protected override async Task OnInitializedAsync() {
+        var storedBarImage = await JS.InvokeAsync<string>("localStorage.getItem", "widget_image");
+        var storedDialImage = await JS.InvokeAsync<string>("localStorage.getItem", "dial_image");
+
+        barBackgroundUrl = !string.IsNullOrWhiteSpace(storedBarImage)
+            ? storedBarImage
+            : "default-bar.png";
+        dialUrl = !string.IsNullOrWhiteSpace(storedDialImage)
+            ? storedDialImage
+            : "default-dial.png";
+        ProgressState.OnProgressUpdated += StateHasChanged;
+    }
+
+    public void Dispose() {
+        ProgressState.OnProgressUpdated -= StateHasChanged;
+    }
+}

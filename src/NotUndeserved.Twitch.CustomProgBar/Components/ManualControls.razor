@@ -1,0 +1,9 @@
+﻿@using NotUndeserved.Twitch.CustomProgBar.Components.State
+@inject ProgressState ProgressState
+
+<div>
+    <h2>Manual override</h2>
+    <button @onclick="ProgressState.IncreaseProgress">Increase</button>
+    <button @onclick="ProgressState.DecreaseProgress">Decrease</button>
+    <button @onclick="ProgressState.ResetProgress">Reset</button>
+</div>

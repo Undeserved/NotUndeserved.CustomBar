@@ -1,0 +1,50 @@
+﻿@page "/oauth-callback"
+
+@inject NavigationManager Navigation
+@inject HttpClient Http
+
+<p>@statusMessage</p>
+
+@code {
+    private string statusMessage = "Authenticating";
+
+    protected override async Task OnInitializedAsync() {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        var code = query.Get("code");
+
+        if (string.IsNullOrEmpty(code)) {
+            statusMessage = "No authorization code found, idiot.";
+            return;
+        }
+
+        try {
+            var response = await Http.PostAsJsonAsync("https://twitch-widget-token-request.undeservednull.workers.dev", new {
+                code = code,
+                redirect_uri = "https://undeserved.github.io/NotUndeserved.CustomBar/oauth-callback"
+            });
+
+            if (response.IsSuccessStatusCode) {
+                var json = await response.Content.ReadFromJsonAsync<TwitchTokenResponse>();
+                statusMessage = "Authenticated successfully!";
+
+                // Save to localStorage
+                await JS.InvokeVoidAsync("localStorage.setItem", "twitch_access_token", json.access_token);
+            } else {
+                statusMessage = $"Token exchange failed: {response.StatusCode} , it's  over.";
+            }
+        } catch (Exception ex) {
+            statusMessage = $"Error: {ex.Message}";
+        }
+    }
+
+    [Inject] IJSRuntime JS { get; set; }
+
+    private class TwitchTokenResponse {
+        public string access_token { get; set; }
+        public string refresh_token { get; set; }
+        public int expires_in { get; set; }
+        public string scope { get; set; }
+        public string token_type { get; set; }
+    }
+}

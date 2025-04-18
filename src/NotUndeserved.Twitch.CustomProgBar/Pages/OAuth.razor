@@ -1,0 +1,24 @@
+﻿@page "/oauth"
+@inject NavigationManager Nav
+@inject HttpClient Http
+@inject IJSRuntime JS
+@using System.Text.Json
+
+<p>Redirecting to Twitch for authorisation...</p>
+
+@code {
+    protected override async Task OnInitializedAsync() {
+        var clientIdJson = await Http.GetStringAsync("https://twitch-widget-token-request.undeservednull.workers.dev/client-id");
+        var clientId = JsonDocument.Parse(clientIdJson).RootElement.GetProperty("client_id").GetString();
+
+        var redirectUri = "https://undeserved.github.io/NotUndeserved.CustomBar/oauth-callback.html";
+
+        var authUrl = $"https://id.twitch.tv/oauth2/authorize" +
+                      $"?client_id={clientId}" +
+                      $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
+                      $"&response_type=code" +
+                      $"&scope=chat:read+chat:edit+channel:read:redemptions+channel:manage:redemptions";
+
+        Nav.NavigateTo(authUrl, forceLoad: true);
+    }
+}

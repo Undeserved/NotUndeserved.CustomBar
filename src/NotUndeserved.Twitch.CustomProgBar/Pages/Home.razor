@@ -1,0 +1,82 @@
+﻿@page "/"
+@inject IJSRuntime JS
+@inject NavigationManager NavManager
+
+@using Microsoft.AspNetCore.WebUtilities
+@code {
+    private bool isEmbedded;
+    private string? imageDataUrl;
+
+    protected override void OnInitialized()
+    {
+        var uri = NavManager.ToAbsoluteUri(NavManager.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        isEmbedded = query.TryGetValue("mode", out var mode) && mode == "embed";
+    }
+
+    private async Task OnImageChanged(InputFileChangeEventArgs e) {
+        var file = e.File;
+        using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024); // max 5MB
+        var buffer = new byte[file.Size];
+        await stream.ReadAsync(buffer);
+        imageDataUrl = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
+
+        // Save to localStorage
+        await JS.InvokeVoidAsync("localStorage.setItem", "progressBarImage", imageDataUrl);
+    }
+}
+
+@if (!isEmbedded)
+{
+    <header>
+        <div class="pattern">
+            <div class="container">
+                <div class="pattern-inner"></div>
+            </div>
+        </div>
+
+        <div class="container">
+            <h1>
+                <span>SYSTEM</span>
+            </h1>
+        </div>
+    </header>
+
+    <NotUndeserved.Twitch.CustomProgBar.Components.Settings />
+
+    <header>
+        <div class="pattern">
+            <div class="container">
+                <div class="pattern-inner"></div>
+            </div>
+        </div>
+
+        <div class="container">
+            <h1>
+                <span>UI</span>
+            </h1>
+        </div>
+    </header>
+
+    <div class="container" style="display: flex; gap: 2rem; align-items: flex-start;">
+        <div class="content" style="flex-shrink: 0;">
+            <NotUndeserved.Twitch.CustomProgBar.Components.ProgressBar />
+        </div>
+        <div class="content">
+            <NotUndeserved.Twitch.CustomProgBar.Components.ManualControls />
+        </div>
+    </div>
+
+
+    <div class="pattern">
+        <div class="container">
+            <div class="pattern-inner"></div>
+        </div>
+    </div>
+}
+else {
+    <NotUndeserved.Twitch.CustomProgBar.Components.ProgressBar />
+}
+
+
+

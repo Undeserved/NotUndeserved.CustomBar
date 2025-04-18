@@ -1,0 +1,160 @@
+﻿@inject IJSRuntime JS
+@inject NavigationManager Nav
+
+<main>
+    <div class="container" style="display: flex; gap: 2rem; flex-wrap: wrap;">
+        <!-- OAuth Settings Section -->
+        <div class="content" style="flex: 1; min-width: 300px;">
+            <section>
+                <h2>OAuth Settings</h2>
+
+                <div style="margin-bottom: 1rem;">
+                    <label>Access Token:</label><br />
+                    <label class="block bg-black nier-border" style="display: block; padding: 1rem;">
+                        @(!string.IsNullOrEmpty(accessToken) ? accessToken : "(No token available)")
+                    </label>
+                </div>
+
+                <div style="margin-bottom: 1rem;">
+                    <label>Expires At:</label><br />
+                    <label class="block bg-black nier-border" style="display: block; padding: 1rem;">
+                        @(expiresAt > 0
+                                                ? DateTimeOffset.FromUnixTimeMilliseconds(expiresAt).ToLocalTime().ToString("f")
+                                                : "Unknown")
+                    </label>
+                </div>
+
+                <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;">
+                    <div>
+                        <label>Channel Name:</label><br />
+                        <input @bind="channelName"
+                        class="nier-border"
+                        style="background: #A39C84; color: white; padding: 0.5rem; max-width: 300px;" />
+                    </div>
+
+                    <div style="margin-top: 1.5rem;">
+                        <button type="button" @onclick="SaveSettings">Save</button>
+                    </div>
+                </div>
+
+                <div style="margin-top: 1rem;">
+                    <button type="button" @onclick="RequestNewToken">Request access token</button>
+                </div>
+            </section>
+        </div>
+
+        <!-- Graphics Section -->
+        <div class="content" style="flex: 1; min-width: 300px;">
+            <section>
+                <h2>Graphics</h2>
+
+                <div style="margin-bottom: 1rem;">
+                    <label>Custom Bar:</label><br />
+                    <input type="file"
+                    @onchange="OnWidgetImageChanged"
+                    class="nier-border"
+                    style="padding: 0.5rem; background: #A39C84; color: white;" />
+
+                    @if (!string.IsNullOrEmpty(imageDataUrl)) {
+                        <div class="nier-border" style="padding: 0.5rem; display: inline-block; margin-top: 0.5rem;">
+                            <img src="@imageDataUrl" alt="Progress Bar" style="max-width: 200px;" />
+                        </div>
+                    }
+                </div>
+
+                <div style="margin-bottom: 1rem;">
+                    <label>Custom Dial:</label><br />
+                    <input type="file"
+                    @onchange="OnDialImageChanged"
+                    class="nier-border"
+                    style="padding: 0.5rem; background: #A39C84; color: white;" />
+
+                    @if (!string.IsNullOrEmpty(dialDataUrl)) {
+                        <div class="nier-border" style="padding: 0.5rem; display: inline-block; margin-top: 0.5rem;">
+                            <img src="@dialDataUrl" alt="Dial" style="max-width: 200px;" />
+                        </div>
+                    }
+                </div>
+
+                <div>
+                    <label>Segments:</label>
+                    <input @bind="segments"
+                    class="nier-border"
+                    style="background: #A39C84; color: white; padding: 0.5rem; max-width: 155px;" />
+                </div>
+
+            </section>
+        </div>
+    </div>
+</main>
+
+
+@code {
+    private string? accessToken;
+    private long expiresAt;
+    private bool isLoaded;
+    private string channelName = "";
+    private string imageDataUrl = "";
+    private string dialDataUrl = "";
+    private int segments;
+
+    protected override async Task OnInitializedAsync() {
+        accessToken = await JS.InvokeAsync<string>("localStorage.getItem", "twitch_access_token");
+        var expiresAtStr = await JS.InvokeAsync<string>("localStorage.getItem", "twitch_token_expires_at");
+        var storedChannel = await JS.InvokeAsync<string>("localStorage.getItem", "widget_channel_name");
+        var storedImage = await JS.InvokeAsync<string>("localStorage.getItem", "widget_image");
+        var storedDialImg = await JS.InvokeAsync<string>("localStorage.getItem", "dial_image");
+        var storedSegments = await JS.InvokeAsync<string>("localStorage.getItem", "widget_segments");
+
+        _ = long.TryParse(expiresAtStr, out expiresAt);
+        _ = int.TryParse(storedSegments, out segments);
+        if(segments <= 0)
+        {
+            segments = 8;
+        }
+        channelName = storedChannel ?? "";
+        imageDataUrl = storedImage ?? "";
+        dialDataUrl = storedDialImg ?? "";
+        isLoaded = true;
+    }
+
+    private async Task OnWidgetImageChanged(ChangeEventArgs e) {
+        if (e.Value is not null && e.Value is not string) {
+            var files = (Microsoft.AspNetCore.Components.Forms.IBrowserFile[])e.Value;
+            if (files.Length > 0) {
+                var file = files[0];
+                using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024); // 10MB max
+                using var ms = new MemoryStream();
+                await stream.CopyToAsync(ms);
+                var base64 = Convert.ToBase64String(ms.ToArray());
+                imageDataUrl = $"data:{file.ContentType};base64,{base64}";
+            }
+        }
+    }
+
+    private async Task OnDialImageChanged(ChangeEventArgs e) {
+        if (e.Value is not null && e.Value is not string) {
+            var files = (Microsoft.AspNetCore.Components.Forms.IBrowserFile[])e.Value;
+            if (files.Length > 0) {
+                var file = files[0];
+                using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024); // 10MB max
+                using var ms = new MemoryStream();
+                await stream.CopyToAsync(ms);
+                var base64 = Convert.ToBase64String(ms.ToArray());
+                dialDataUrl = $"data:{file.ContentType};base64,{base64}";
+            }
+        }
+    }
+
+    private async Task SaveSettings() {
+        await JS.InvokeVoidAsync("localStorage.setItem", "widget_channel_name", channelName);
+        await JS.InvokeVoidAsync("localStorage.setItem", "widget_image", imageDataUrl);
+        await JS.InvokeVoidAsync("localStorage.setItem", "dial_image", dialDataUrl);
+        await JS.InvokeVoidAsync("localStorage.setItem", "widget_segments", Math.Max(segments, 2).ToString());
+        await JS.InvokeVoidAsync("alert", "Settings saved!");
+    }
+
+    private void RequestNewToken() {
+        Nav.NavigateTo("oauth", forceLoad: true);
+    }
+}
