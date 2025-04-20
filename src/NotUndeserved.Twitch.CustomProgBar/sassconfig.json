@@ -34,5 +34,13 @@
   {
     "outputFile": "wwwroot/css/customStyle.css",
     "inputFile": "wwwroot/css/customStyle.scss"
+  },
+  {
+    "outputFile": "wwwroot/css/customStyle.css",
+    "inputFile": "wwwroot/css/customStyle.scss"
+  },
+  {
+    "outputFile": "wwwroot/css/customStyle.css",
+    "inputFile": "wwwroot/css/customStyle.scss"
   }
 ]
