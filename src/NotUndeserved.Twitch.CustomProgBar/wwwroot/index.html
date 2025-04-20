@@ -4,18 +4,58 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Content-Security-Policy" content="
-      default-src 'self';
-      connect-src 'self' https://twitch-widget-token-request.undeservednull.workers.dev;
-      script-src 'self' 'unsafe-eval';
-      style-src 'self' 'unsafe-inline';
-    ">
+
     <title>NotUndeserved.Twitch.CustomProgBar</title>
-    <base href="/NotUndeserved.CustomBar/" />
+    <!--<base href="/NotUndeserved.CustomBar/" />-->
+    <!--<base href="/" />-->
     <link rel="stylesheet" href="css/app.css" />
     <link rel="stylesheet" href="css/customstyle.css" />
-    <!-- If you add any scoped CSS files, uncomment the following to load them
-    <link href="NotUndeserved.Twitch.CustomProgBar.styles.css" rel="stylesheet" /> -->
+
+    <script>
+        // Enviroment switching
+        const isLocal = location.hostname === 'localhost';
+        const base = document.createElement('base');
+        base.href = isLocal ? '/' : '/NotUndeserved.Widgets/';
+        document.head.appendChild(base);
+
+        // Sync progress between tabs
+        window.progressSync = {
+            subscribeToStorageChanges: function (dotNetRef) {
+                window.addEventListener("storage", (event) => {
+                    if (event.key === "progress_fill" || event.key === "widget_bar_segments") {
+                        dotNetRef.invokeMethodAsync("OnStorageChanged", event.key, event.newValue);
+                    }
+                });
+            }
+        };
+
+        // Determine environment
+        window.isDev = location.hostname === "localhost";
+
+        // Inject correct CSP
+        const csp = document.createElement('meta');
+        csp.httpEquiv = "Content-Security-Policy";
+
+        if (window.isDev) {
+            // Development: allow localhost and websockets
+            csp.content = `
+            default-src 'self';
+            connect-src 'self' http://localhost:* ws://localhost:* wss://localhost:* https://twitch-widget-token-request.undeservednull.workers.dev;
+            script-src 'self' 'unsafe-eval';
+            style-src 'self' 'unsafe-inline';
+          `;
+        } else {
+            // Production: strict CSP
+            csp.content = `
+            default-src 'self';
+            connect-src 'self' https://twitch-widget-token-request.undeservednull.workers.dev;
+            script-src 'self' 'unsafe-eval';
+            style-src 'self' 'unsafe-inline';
+          `;
+        }
+
+        document.head.appendChild(csp);
+    </script>
 </head>
 
 <body>
@@ -32,6 +72,7 @@
         <a href="" class="reload">Reload</a>
         <a class="dismiss">🗙</a>
     </div>
+
     <script src="_framework/blazor.webassembly.js"></script>
 </body>
 

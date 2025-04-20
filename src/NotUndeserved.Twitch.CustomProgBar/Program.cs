@@ -12,12 +12,12 @@ builder.RootComponents.Add<App>("#app");
 //builder.Services.AddHttpClient<IWidgetConfigService, WidgetConfigService>(client => {
 //    client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress);
 //});
-builder.Services.AddSingleton<IWidgetConfigService, WidgetConfigService>();
+//builder.Services.AddSingleton<IWidgetConfigService, WidgetConfigService>();
 builder.Services.AddSingleton<ProgressState>();
 
 var host = builder.Build();
 
-var widgetConfigService = host.Services.GetRequiredService<IWidgetConfigService>();
-await widgetConfigService.LoadConfigurationAsync();
+//var widgetConfigService = host.Services.GetRequiredService<IWidgetConfigService>();
+//await widgetConfigService.LoadConfigurationAsync();
 
 await host.RunAsync();

@@ -1,4 +1,5 @@
-﻿@inject IJSRuntime JS
+﻿@using NotUndeserved.Twitch.CustomProgBar.Application.Common
+@inject IJSRuntime JS
 @inject NavigationManager Nav
 
 <main>
@@ -99,12 +100,12 @@
     private int segments;
 
     protected override async Task OnInitializedAsync() {
-        accessToken = await JS.InvokeAsync<string>("localStorage.getItem", "twitch_access_token");
-        var expiresAtStr = await JS.InvokeAsync<string>("localStorage.getItem", "twitch_token_expires_at");
-        var storedChannel = await JS.InvokeAsync<string>("localStorage.getItem", "widget_channel_name");
-        var storedImage = await JS.InvokeAsync<string>("localStorage.getItem", "widget_image");
-        var storedDialImg = await JS.InvokeAsync<string>("localStorage.getItem", "dial_image");
-        var storedSegments = await JS.InvokeAsync<string>("localStorage.getItem", "widget_segments");
+        accessToken = await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.TwitchAccessToken);
+        var expiresAtStr = await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.TwitchTokenExpiresAt);
+        var storedChannel = await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.TwitchChannelName);
+        var storedImage = await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.CustomBarImage);
+        var storedDialImg = await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.CustomDialImage);
+        var storedSegments = await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.CustomWidgetSegments);
 
         _ = long.TryParse(expiresAtStr, out expiresAt);
         _ = int.TryParse(storedSegments, out segments);
@@ -147,10 +148,10 @@
     }
 
     private async Task SaveSettings() {
-        await JS.InvokeVoidAsync("localStorage.setItem", "widget_channel_name", channelName);
-        await JS.InvokeVoidAsync("localStorage.setItem", "widget_image", imageDataUrl);
-        await JS.InvokeVoidAsync("localStorage.setItem", "dial_image", dialDataUrl);
-        await JS.InvokeVoidAsync("localStorage.setItem", "widget_segments", Math.Max(segments, 2).ToString());
+        await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.TwitchChannelName, channelName);
+        await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.CustomBarImage, imageDataUrl);
+        await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.CustomDialImage, dialDataUrl);
+        await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.CustomWidgetSegments, Math.Max(segments, 2).ToString());
         await JS.InvokeVoidAsync("alert", "Settings saved!");
     }
 
