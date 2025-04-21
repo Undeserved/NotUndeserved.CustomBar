@@ -32,7 +32,7 @@ namespace NotUndeserved.Twitch.CustomProgBar.Components.State {
             var sectionsStr = await _js.InvokeAsync<string>("localStorage.getItem", LocalResources.CustomWidgetSegments);
             var fillStr = await _js.InvokeAsync<string>("localStorage.getItem", LocalResources.FillPercentage);
 
-            if (!double.TryParse(sectionsStr, out double parsedSegments) || parsedSegments <= 0)
+            if (!double.TryParse(sectionsStr, out double parsedSegments) || parsedSegments <= 2)
                 parsedSegments = DefaultSegments;
 
             if (!double.TryParse(fillStr, out double parsedFill))

@@ -1,7 +1,15 @@
 ﻿@using NotUndeserved.Twitch.CustomProgBar.Application.Common
-@implements IDisposable
+@using NotUndeserved.Twitch.CustomProgBar.Application.Models
+@using NotUndeserved.Twitch.CustomProgBar.Application.Interfaces
+@using NotUndeserved.Twitch.CustomProgBar.Components.State
+
+@implements IAsyncDisposable
 @inject IJSRuntime JS
-@inject State.ProgressState ProgressState
+@inject ProgressState ProgressState
+@inject ITokenManagerService TokenManagerService
+@inject ITokenRefreshService TokenRefreshService
+@inject ITwitchApiClientService TwitchApiClientService
+@inject AppConfig AppConfigService
 
 @if (!string.IsNullOrEmpty(barBackgroundUrl))
 {
@@ -36,6 +44,12 @@
 @code{
     private string? barBackgroundUrl;
     private string? dialUrl;
+    private string? broadcasterUserId;
+    private IJSObjectReference? _eventSubModule;
+    private DotNetObjectReference<ProgressBar>? _dotNetRef;
+    private TokenData _token;
+
+    Func<string, Task>? _refreshHandler;
 
     private double DialTopPosition =>
     ProgressState.Sections > 0
@@ -45,8 +59,11 @@
     protected override async Task OnInitializedAsync() {
         await ProgressState.InitialiseAsync();
         StateHasChanged();
+        ProgressState.OnProgressUpdated += StateHasChanged;
+
         var storedBarImage = await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.CustomBarImage);
         var storedDialImage = await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.CustomDialImage);
+        var storedChannelName = await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.TwitchChannelName);
 
         barBackgroundUrl = !string.IsNullOrWhiteSpace(storedBarImage)
             ? storedBarImage
@@ -54,10 +71,75 @@
         dialUrl = !string.IsNullOrWhiteSpace(storedDialImage)
             ? storedDialImage
             : LocalResources.DefaultDialImage;
-        ProgressState.OnProgressUpdated += StateHasChanged;
+
+        _dotNetRef = DotNetObjectReference.Create(this);
+        _eventSubModule = await JS.InvokeAsync<IJSObjectReference>("import", "./js/twitchEventSub.js");
+        await _eventSubModule.InvokeVoidAsync("addStorageListener", _dotNetRef);
+
+        _token = await TokenManagerService.GetTokenAsync();
+        if (!string.IsNullOrWhiteSpace(storedChannelName)) {
+            broadcasterUserId = await TwitchApiClientService.GetUserIdByChannelNameAsync(storedChannelName);            
+        }
+
+        _refreshHandler = async (newToken) => {
+            await StartEventSubAsync(newToken);
+        };
+        TokenRefreshService.OnTokenRefreshed += _refreshHandler;
+
+        if (_token != null) {
+            await StartEventSubAsync(_token.AccessToken);            
+        }
     }
 
-    public void Dispose() {
-        ProgressState.OnProgressUpdated -= StateHasChanged;
+    private async Task StartEventSubAsync(string accessToken) {
+        if (_eventSubModule != null
+            && _dotNetRef != null
+            && !string.IsNullOrWhiteSpace(accessToken)
+            && !string.IsNullOrEmpty(broadcasterUserId)) {
+            await _eventSubModule.InvokeVoidAsync("stopTwitchWebSocket");
+            await _eventSubModule.InvokeVoidAsync("startTwitchWebSocket", _dotNetRef, accessToken, AppConfigService.TwitchClientId, broadcasterUserId);
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnRedemptionReceived(string userName, string rewardTitle) {
+        Console.WriteLine($"Redemption received from {userName}: {rewardTitle}");
+        switch (rewardTitle)
+        {
+            //ALERTA ALERTA ALERTA
+            //Define channel reward interactions, maybe add a customisation option? ???: Increase, ???: Decrease, OwlNuke: Reset (maybe)
+            //ALERTA ALERTA ALERTA
+        }
+        await InvokeAsync(StateHasChanged);
+    }
+
+    [JSInvokable]
+    public async Task OnChannelChanged() {
+        var storedChannelName = await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.TwitchChannelName);
+        if (!string.IsNullOrWhiteSpace(storedChannelName)) {
+            broadcasterUserId = await TwitchApiClientService.GetUserIdByChannelNameAsync(storedChannelName);
+
+            var token = await TokenManagerService.GetTokenAsync();
+            if (token != null) {
+                await StartEventSubAsync(token.AccessToken);
+            }
+        }
+    }
+
+    public async ValueTask DisposeAsync() {
+        ProgressState.OnProgressUpdated -= StateHasChanged; 
+        await _eventSubModule.InvokeVoidAsync("removeStorageListener");
+
+        if (_eventSubModule != null) {
+            await _eventSubModule.InvokeVoidAsync("stopTwitchWebSocket");
+            await _eventSubModule.DisposeAsync();
+        }
+
+        if (_refreshHandler != null){
+            TokenRefreshService.OnTokenRefreshed -= _refreshHandler;
+            _refreshHandler = null;
+        }
+
+        _dotNetRef?.Dispose();
     }
 }

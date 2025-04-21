@@ -2,6 +2,7 @@
 
 @inject NavigationManager Navigation
 @inject HttpClient Http
+@inject Application.Common.AppConfig AppConfig
 
 <p>@statusMessage</p>
 
@@ -19,9 +20,9 @@
         }
 
         try {
-            var response = await Http.PostAsJsonAsync("https://twitch-widget-token-request.undeservednull.workers.dev", new {
+            var response = await Http.PostAsJsonAsync(AppConfig.ServerlessAuthWorker, new {
                 code = code,
-                redirect_uri = "https://undeserved.github.io/NotUndeserved.CustomBar/oauth-callback"
+                redirect_uri = AppConfig.RedirectUri
             });
 
             if (response.IsSuccessStatusCode) {

@@ -2,6 +2,7 @@
     public static class LocalResources {
         //OAuth
         public const string TwitchAccessToken = "twitch_access_token";
+        public const string TwitchRefreshToken = "twitch_refresh_token";
         public const string TwitchTokenExpiresAt = "twitch_token_expires_at";
         public const string TwitchChannelName = "twitch_channel_name";
 

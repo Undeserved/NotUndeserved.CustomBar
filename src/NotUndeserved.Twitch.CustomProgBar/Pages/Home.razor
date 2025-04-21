@@ -3,6 +3,8 @@
 @inject NavigationManager NavManager
 
 @using Microsoft.AspNetCore.WebUtilities
+@using NotUndeserved.Twitch.CustomProgBar.Application.Common
+
 @code {
     private bool isEmbedded;
     private string? imageDataUrl;
@@ -22,7 +24,7 @@
         imageDataUrl = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
 
         // Save to localStorage
-        await JS.InvokeVoidAsync("localStorage.setItem", "progressBarImage", imageDataUrl);
+        await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.CustomBarImage, imageDataUrl);
     }
 }
 

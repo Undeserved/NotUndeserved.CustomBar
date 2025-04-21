@@ -2,18 +2,18 @@
 @inject NavigationManager Nav
 @inject HttpClient Http
 @inject IJSRuntime JS
+@inject Application.Common.AppConfig AppConfig
 @using System.Text.Json
 
 <p>Redirecting to Twitch for authorisation...</p>
 
 @code {
     protected override async Task OnInitializedAsync() {
-        var clientIdJson = await Http.GetStringAsync("https://twitch-widget-token-request.undeservednull.workers.dev/client-id");
-        var clientId = JsonDocument.Parse(clientIdJson).RootElement.GetProperty("client_id").GetString();
+        var clientId = AppConfig.TwitchClientId;
 
-        var redirectUri = "https://undeserved.github.io/NotUndeserved.CustomBar/oauth-callback.html";
+        var redirectUri = AppConfig.RedirectUri;
 
-        var authUrl = $"https://id.twitch.tv/oauth2/authorize" +
+        var authUrl = $"{AppConfig.TwitchAuthEndpoint}" +
                       $"?client_id={clientId}" +
                       $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
                       $"&response_type=code" +

@@ -53,6 +53,10 @@
         }
 
         document.head.appendChild(csp);
+
+        window.setAppConfig = function (config) {
+            window.AppConfig = config;
+        };
     </script>
 </head>
 
@@ -71,6 +75,7 @@
         <a class="dismiss">🗙</a>
     </div>
 
+    <script src="js/twitchEventSub.js" type="module"></script>
     <script src="_framework/blazor.webassembly.js"></script>
 </body>
 
