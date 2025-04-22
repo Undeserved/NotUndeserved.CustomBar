@@ -4,96 +4,90 @@
 
 <main>
     <div class="container" style="display: flex; gap: 2rem; flex-wrap: wrap;">
-        <!-- OAuth Settings Section -->
-        <div class="content" style="flex: 1; min-width: 300px;">
-            <section>
-                <h2>OAuth Settings</h2>
+        <div class="content" style="flex: 1; min-width: 300px; min-height: 400px;">
+            <div class="tabs nier-border">
+                <button @onclick="@(() => selectedTab = "oauth")" class="tab-button @(selectedTab == "oauth" ? "active" : "")">OAuth</button>
+                <button @onclick="@(() => selectedTab = "graphics")" class="tab-button @(selectedTab == "graphics" ? "active" : "")">Graphics</button>
+                <button @onclick="@(() => selectedTab = "redemptions")" class="tab-button @(selectedTab == "redemptions" ? "active" : "")">Redemptions</button>
+            </div>
+            @if (selectedTab == "oauth") {
+                <section>
+                    <h2>OAuth Settings</h2>
 
-                <div style="margin-bottom: 1rem;">
-                    <label>Access Token:</label><br />
-                    <label class="block bg-black nier-border" style="display: block; padding: 1rem;">
-                        @(!string.IsNullOrEmpty(accessToken) ? accessToken : "(No token available)")
-                    </label>
-                </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label>Access Token:</label><br />
+                        <label class="block nier-border" style="display: block; padding: 1rem;">
+                            @(!string.IsNullOrEmpty(accessToken) ? accessToken : "(No token available)")
+                        </label>
+                    </div>
 
-                <div style="margin-bottom: 1rem;">
-                    <label>Expires At:</label><br />
-                    <label class="block bg-black nier-border" style="display: block; padding: 1rem;">
-                        @(expiresAt > 0
-                                                ? DateTimeOffset.FromUnixTimeMilliseconds(expiresAt).ToLocalTime().ToString("f")
-                                                : "Unknown")
-                    </label>
-                </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label>Expires At:</label><br />
+                        <label class="block nier-border" style="display: block; padding: 1rem;">
+                            @(expiresAt > 0
+                                ? DateTimeOffset.FromUnixTimeMilliseconds(expiresAt).ToLocalTime().ToString("f")
+                                : "Unknown")
+                        </label>
+                    </div>
 
-                <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;">
-                    <div>
+                    <div style="margin-bottom: 1rem;">
                         <label>Channel Name:</label><br />
-                        <input @bind="channelName"
-                        class="nier-border"
-                        style="background: #A39C84; color: white; padding: 0.5rem; max-width: 300px;" />
+                        <input @bind="channelName" class="nier-border" style="padding: 0.5rem; max-width: 300px; background: #A39C84;" />
                     </div>
 
-                    <div style="margin-top: 1.5rem;">
+                    <div style="margin-top: 1rem;">
                         <button type="button" @onclick="SaveSettings">Save</button>
+                        <button type="button" @onclick="RequestNewToken" style="margin-left: 1rem;">Request access token</button>
                     </div>
-                </div>
+                </section>
+            } else if (selectedTab == "graphics") {
+                <section>
+                    <h2>Graphics</h2>
 
-                <div style="margin-top: 1rem;">
-                    <button type="button" @onclick="RequestNewToken">Request access token</button>
-                </div>
-            </section>
-        </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label>Custom Bar:</label><br />
+                        <input type="file" @onchange="OnWidgetImageChanged" class="nier-border" style="padding: 0.5rem; background: #A39C84;" />
 
-        <!-- Graphics Section -->
-        <div class="content" style="flex: 1; min-width: 300px;">
-            <section>
-                <h2>Graphics</h2>
+                        @if (!string.IsNullOrEmpty(imageDataUrl)) {
+                            <div class="nier-border" style="padding: 0.5rem; display: inline-block; margin-top: 0.5rem;">
+                                <img src="@imageDataUrl" alt="Progress Bar" style="max-width: 200px;" />
+                            </div>
+                        }
+                    </div>
 
-                <div style="margin-bottom: 1rem;">
-                    <label>Custom Bar:</label><br />
-                    <input type="file"
-                    @onchange="OnWidgetImageChanged"
-                    class="nier-border"
-                    style="padding: 0.5rem; background: #A39C84; color: white;" />
+                    <div style="margin-bottom: 1rem;">
+                        <label>Custom Dial:</label><br />
+                        <input type="file" @onchange="OnDialImageChanged" class="nier-border" style="padding: 0.5rem; background: #A39C84;" />
 
-                    @if (!string.IsNullOrEmpty(imageDataUrl)) {
-                        <div class="nier-border" style="padding: 0.5rem; display: inline-block; margin-top: 0.5rem;">
-                            <img src="@imageDataUrl" alt="Progress Bar" style="max-width: 200px;" />
-                        </div>
-                    }
-                </div>
+                        @if (!string.IsNullOrEmpty(dialDataUrl)) {
+                            <div class="nier-border" style="padding: 0.5rem; display: inline-block; margin-top: 0.5rem;">
+                                <img src="@dialDataUrl" alt="Dial" style="max-width: 200px;" />
+                            </div>
+                        }
+                    </div>
 
-                <div style="margin-bottom: 1rem;">
-                    <label>Custom Dial:</label><br />
-                    <input type="file"
-                    @onchange="OnDialImageChanged"
-                    class="nier-border"
-                    style="padding: 0.5rem; background: #A39C84; color: white;" />
-
-                    @if (!string.IsNullOrEmpty(dialDataUrl)) {
-                        <div class="nier-border" style="padding: 0.5rem; display: inline-block; margin-top: 0.5rem;">
-                            <img src="@dialDataUrl" alt="Dial" style="max-width: 200px;" />
-                        </div>
-                    }
-                </div>
-
-                <div>
-                    <label>Segments:</label>
-                    <input @bind="segments"
-                    class="nier-border"
-                    style="background: #A39C84; color: white; padding: 0.5rem; max-width: 155px;" />
-                </div>
-
-            </section>
+                    <div>
+                        <label>Segments:</label>
+                        <input @bind="segments" class="nier-border" style="padding: 0.5rem; max-width: 155px; background: #A39C84;" />
+                    </div>
+                </section>
+            } else if (selectedTab == "redemptions") {
+                <section>
+                    <h2>Redemptions</h2>
+                    <p>TODO: Set up a redemption settings menu, lmao.</p>
+                    <div class="nier-border" style="padding: 1rem; margin-top: 1rem;">
+                        <em>Live WebSocket integration not yet configured.</em>
+                    </div>
+                </section>
+            }
         </div>
     </div>
 </main>
 
-
 @code {
+    private string selectedTab = "oauth";
     private string? accessToken;
     private long expiresAt;
-    private bool isLoaded;
     private string channelName = "";
     private string imageDataUrl = "";
     private string dialDataUrl = "";
@@ -109,14 +103,12 @@
 
         _ = long.TryParse(expiresAtStr, out expiresAt);
         _ = int.TryParse(storedSegments, out segments);
-        if(segments <= 0)
-        {
+        if (segments <= 0) {
             segments = 8;
         }
         channelName = storedChannel ?? "";
         imageDataUrl = storedImage ?? "";
         dialDataUrl = storedDialImg ?? "";
-        isLoaded = true;
     }
 
     private async Task OnWidgetImageChanged(ChangeEventArgs e) {
@@ -124,7 +116,7 @@
             var files = (Microsoft.AspNetCore.Components.Forms.IBrowserFile[])e.Value;
             if (files.Length > 0) {
                 var file = files[0];
-                using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024); // 10MB max
+                using var stream = file.OpenReadStream(10 * 1024 * 1024);
                 using var ms = new MemoryStream();
                 await stream.CopyToAsync(ms);
                 var base64 = Convert.ToBase64String(ms.ToArray());
@@ -138,7 +130,7 @@
             var files = (Microsoft.AspNetCore.Components.Forms.IBrowserFile[])e.Value;
             if (files.Length > 0) {
                 var file = files[0];
-                using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024); // 10MB max
+                using var stream = file.OpenReadStream(10 * 1024 * 1024);
                 using var ms = new MemoryStream();
                 await stream.CopyToAsync(ms);
                 var base64 = Convert.ToBase64String(ms.ToArray());
