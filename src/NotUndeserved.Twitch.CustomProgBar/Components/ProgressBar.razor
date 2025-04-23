@@ -126,8 +126,24 @@
         }
     }
 
+    [JSInvokable]
+    public async Task OnImageChanged() {
+        var storedBarImage = await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.CustomBarImage);
+        var storedDialImage = await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.CustomDialImage);
+
+        barBackgroundUrl = string.IsNullOrWhiteSpace(storedBarImage)
+            ? LocalResources.DefaultBarImage
+            : storedBarImage;
+
+        dialUrl = string.IsNullOrWhiteSpace(storedDialImage)
+            ? LocalResources.DefaultDialImage
+            : storedDialImage;
+
+        await InvokeAsync(StateHasChanged);
+    }
+
     public async ValueTask DisposeAsync() {
-        ProgressState.OnProgressUpdated -= StateHasChanged; 
+        ProgressState.OnProgressUpdated -= StateHasChanged;
         await _eventSubModule.InvokeVoidAsync("removeStorageListener");
 
         if (_eventSubModule != null) {
@@ -135,7 +151,7 @@
             await _eventSubModule.DisposeAsync();
         }
 
-        if (_refreshHandler != null){
+        if (_refreshHandler != null) {
             TokenRefreshService.OnTokenRefreshed -= _refreshHandler;
             _refreshHandler = null;
         }

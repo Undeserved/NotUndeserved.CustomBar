@@ -11,7 +11,7 @@
     <link rel="icon" type="image/x-icon" href="favicon.ico">
 
     <script>
-        // Enviroment switching
+        // Environment switching
         const isLocal = location.hostname === 'localhost';
         const base = document.createElement('base');
         base.href = isLocal ? '/' : '/NotUndeserved.CustomBar/';
@@ -35,24 +35,25 @@
         const csp = document.createElement('meta');
         csp.httpEquiv = "Content-Security-Policy";
 
-        if (window.isDev) {
-            // Development: allow localhost and websockets
-            csp.content = `
-                default-src 'self';
-                connect-src 'self' http://localhost:* ws://localhost:* wss://localhost:* https://twitch-widget-token-request.undeservednull.workers.dev;
-                script-src 'self' 'unsafe-eval';
-                style-src 'self' 'unsafe-inline';
-              `;
-        } else {
-            // Production: strict CSP
-            csp.content = `
-                default-src 'self';
-                connect-src 'self' https://twitch-widget-token-request.undeservednull.workers.dev;
-                script-src 'self' 'unsafe-eval';
-                style-src 'self' 'unsafe-inline';
-              `;
-        }
+        const prodCSP = `
+            default-src 'self';
+            img-src 'self' data: blob:;
+            media-src 'self' data: blob:;
+            connect-src 'self' https://twitch-widget-token-request.undeservednull.workers.dev;
+            script-src 'self' 'unsafe-eval';
+            style-src 'self' 'unsafe-inline';
+        `;
 
+        const devCSP = `
+            default-src 'self';
+            img-src 'self' data: blob:;
+            media-src 'self' data: blob:;
+            connect-src 'self' http://localhost:* ws://localhost:* wss://localhost:* https://twitch-widget-token-request.undeservednull.workers.dev;
+            script-src 'self' 'unsafe-eval';
+            style-src 'self' 'unsafe-inline';
+        `;
+
+        csp.content = (window.isDev ? devCSP : prodCSP).replace(/\s+/g, ' ').trim();
         document.head.appendChild(csp);
 
         window.setAppConfig = function (config) {

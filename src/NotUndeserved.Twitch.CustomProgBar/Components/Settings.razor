@@ -25,8 +25,8 @@
                         <label>Expires At:</label><br />
                         <label class="block nier-border" style="display: block; padding: 1rem;">
                             @(expiresAt > 0
-                                ? DateTimeOffset.FromUnixTimeMilliseconds(expiresAt).ToLocalTime().ToString("f")
-                                : "Unknown")
+                                    ? DateTimeOffset.FromUnixTimeMilliseconds(expiresAt).ToLocalTime().ToString("f")
+                                    : "Unknown")
                         </label>
                     </div>
 
@@ -46,24 +46,16 @@
 
                     <div style="margin-bottom: 1rem;">
                         <label>Custom Bar:</label><br />
-                        <input type="file" @onchange="OnWidgetImageChanged" class="nier-border" style="padding: 0.5rem; background: #A39C84;" />
-
-                        @if (!string.IsNullOrEmpty(imageDataUrl)) {
-                            <div class="nier-border" style="padding: 0.5rem; display: inline-block; margin-top: 0.5rem;">
-                                <img src="@imageDataUrl" alt="Progress Bar" style="max-width: 200px;" />
-                            </div>
-                        }
+                        <input type="file" @ref="_imageInputRef" @onchange="OnWidgetImageChanged"
+                               class="nier-border"
+                               style="padding: 0.5rem; background: #A39C84;" />
                     </div>
 
                     <div style="margin-bottom: 1rem;">
                         <label>Custom Dial:</label><br />
-                        <input type="file" @onchange="OnDialImageChanged" class="nier-border" style="padding: 0.5rem; background: #A39C84;" />
-
-                        @if (!string.IsNullOrEmpty(dialDataUrl)) {
-                            <div class="nier-border" style="padding: 0.5rem; display: inline-block; margin-top: 0.5rem;">
-                                <img src="@dialDataUrl" alt="Dial" style="max-width: 200px;" />
-                            </div>
-                        }
+                        <input type="file" @ref="_dialInputRef" @onchange="OnDialImageChanged"
+                               class="nier-border"
+                               style="padding: 0.5rem; background: #A39C84;" />
                     </div>
 
                     <div>
@@ -85,6 +77,10 @@
 </main>
 
 @code {
+    private ElementReference _imageInputRef;
+    private ElementReference _dialInputRef;
+    private IJSObjectReference? _eventSubModule;
+
     private string selectedTab = "oauth";
     private string? accessToken;
     private long expiresAt;
@@ -94,7 +90,9 @@
     private int segments;
 
     protected override async Task OnInitializedAsync() {
+        _eventSubModule = await JS.InvokeAsync<IJSObjectReference>("import", "./js/twitchEventSub.js");
         accessToken = await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.TwitchAccessToken);
+
         var expiresAtStr = await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.TwitchTokenExpiresAt);
         var storedChannel = await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.TwitchChannelName);
         var storedImage = await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.CustomBarImage);
@@ -107,36 +105,25 @@
             segments = 8;
         }
         channelName = storedChannel ?? "";
-        imageDataUrl = storedImage ?? "";
-        dialDataUrl = storedDialImg ?? "";
+        if (!string.IsNullOrWhiteSpace(storedImage)) {
+            imageDataUrl = storedImage;
+        }
+
+        if (!string.IsNullOrWhiteSpace(storedDialImg)) {
+            dialDataUrl = storedDialImg;
+        }
     }
 
     private async Task OnWidgetImageChanged(ChangeEventArgs e) {
-        if (e.Value is not null && e.Value is not string) {
-            var files = (Microsoft.AspNetCore.Components.Forms.IBrowserFile[])e.Value;
-            if (files.Length > 0) {
-                var file = files[0];
-                using var stream = file.OpenReadStream(10 * 1024 * 1024);
-                using var ms = new MemoryStream();
-                await stream.CopyToAsync(ms);
-                var base64 = Convert.ToBase64String(ms.ToArray());
-                imageDataUrl = $"data:{file.ContentType};base64,{base64}";
-            }
-        }
+        imageDataUrl = await ReadImageAsBase64(_imageInputRef);
+        await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.CustomBarImage, imageDataUrl);
+        await _eventSubModule.InvokeVoidAsync("dispatchForceLocalStorageUpdate");
     }
 
     private async Task OnDialImageChanged(ChangeEventArgs e) {
-        if (e.Value is not null && e.Value is not string) {
-            var files = (Microsoft.AspNetCore.Components.Forms.IBrowserFile[])e.Value;
-            if (files.Length > 0) {
-                var file = files[0];
-                using var stream = file.OpenReadStream(10 * 1024 * 1024);
-                using var ms = new MemoryStream();
-                await stream.CopyToAsync(ms);
-                var base64 = Convert.ToBase64String(ms.ToArray());
-                dialDataUrl = $"data:{file.ContentType};base64,{base64}";
-            }
-        }
+        dialDataUrl = await ReadImageAsBase64(_dialInputRef);
+        await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.CustomDialImage, dialDataUrl);
+        await _eventSubModule.InvokeVoidAsync("dispatchForceLocalStorageUpdate");
     }
 
     private async Task SaveSettings() {
@@ -144,10 +131,16 @@
         await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.CustomBarImage, imageDataUrl);
         await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.CustomDialImage, dialDataUrl);
         await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.CustomWidgetSegments, Math.Max(segments, 2).ToString());
+
+        await _eventSubModule.InvokeVoidAsync("dispatchForceLocalStorageUpdate"); 
         await JS.InvokeVoidAsync("alert", "Settings saved!");
     }
 
     private void RequestNewToken() {
         Nav.NavigateTo("oauth", forceLoad: true);
+    }
+
+    private async Task<string> ReadImageAsBase64(ElementReference inputRef) {
+        return await _eventSubModule.InvokeAsync<string>("readFileAsDataUrl", inputRef);
     }
 }
