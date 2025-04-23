@@ -8,6 +8,7 @@ let storageListener = null;
 const recentRedemptionIds = new Set();
 const REDEMPTION_CACHE_DURATION = 60 * 1000; // 1 minute
 
+console.log("[twitchEventSub.js] Module loaded");
 export function startTwitchWebSocket(ref, token, clientId, broadcasterUserId) {
     dotNetRef = ref;
 
@@ -173,13 +174,28 @@ export function stopTwitchWebSocket() {
     console.log("[TwitchEventSub] Disconnected");
 }
 
-export function addStorageListener(dotNetRef) {
+export function addStorageListener(ref) {
+    dotNetRef = ref;
+
     storageListener = (event) => {
         if (event.key === "twitch-channel-name") {
             dotNetRef.invokeMethodAsync("OnChannelChanged");
         }
+
+        if (event.key === 'widget_bar_image' || event.key === 'widget_dial_image') {
+            dotNetRef.invokeMethodAsync('OnImageChanged');
+        }
     };
-    window.addEventListener("storage", storageListener);
+
+    window.addEventListener('storage', storageListener);
+    window.addEventListener('forceLocalStorageUpdate', () => {
+        dotNetRef.invokeMethodAsync('OnImageChanged');
+    });
+}
+
+export function dispatchForceLocalStorageUpdate() {
+    // Trigger a manual storage event to simulate cross-tab sync (affects current tab too)
+    window.dispatchEvent(new Event('forceLocalStorageUpdate'));
 }
 
 export function removeStorageListener() {
@@ -187,4 +203,31 @@ export function removeStorageListener() {
         window.removeEventListener("storage", storageListener);
         storageListener = null;
     }
+}
+
+export function createObjectUrl(file) {
+    return URL.createObjectURL(file);
+}
+
+export function createObjectUrlFromInput(inputElement) {
+    const file = inputElement.files?.[0];
+    if (!file) {
+        throw new Error("No file selected");
+    }
+    return URL.createObjectURL(file);
+}
+
+export async function readFileAsDataUrl(inputElement) {
+    return new Promise((resolve, reject) => {
+        const file = inputElement.files[0];
+        if (!file) {
+            resolve("");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
 }
