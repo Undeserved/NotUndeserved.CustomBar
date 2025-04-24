@@ -2,10 +2,10 @@
     public class AppConfig {
         //LEGAL LEGAL LEGAL
         //APPARENTLY EXPOSING THIS IS SAFE
-        public string TwitchClientId { get; set; } = default;
+        public string TwitchClientId { get; set; } = "";
         //LEGAL LEGAL LEGAL
-        public string RedirectUri { get; set; } = default;
-        public string ServerlessAuthWorker { get; set; } = default;
-        public string TwitchAuthEndpoint { get; set; } = default;
+        public string RedirectUri { get; set; } = "";
+        public string ServerlessAuthWorker { get; set; } = "";
+        public string TwitchAuthEndpoint { get; set; } = "";
     }
 }

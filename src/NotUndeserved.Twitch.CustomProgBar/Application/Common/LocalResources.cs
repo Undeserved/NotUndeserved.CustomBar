@@ -11,6 +11,11 @@
         public const string CustomDialImage = "widget_dial_image";
         public const string CustomWidgetSegments = "widget_bar_segments";
 
+        //Twitch
+        public const string RedemptionIncrease = "redemption_increase";
+        public const string RedemptionDecrease = "redemption_decrease";
+        public const string RedemptionReset = "redemption_reset";
+
         //Persistence
         public const string FillPercentage = "progress_fill";
 
