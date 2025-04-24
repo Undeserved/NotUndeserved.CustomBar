@@ -87,7 +87,8 @@
         TokenRefreshService.OnTokenRefreshed += _refreshHandler;
 
         if (_token != null) {
-            await StartEventSubAsync(_token.AccessToken);            
+            await StartEventSubAsync(_token.AccessToken);
+            await _eventSubModule.InvokeVoidAsync("dispatchForceLocalStorageUpdate");
         }
     }
 

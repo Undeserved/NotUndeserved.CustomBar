@@ -39,7 +39,7 @@
             default-src 'self';
             img-src 'self' data: blob:;
             media-src 'self' data: blob:;
-            connect-src 'self' https://twitch-widget-token-request.undeservednull.workers.dev;
+            connect-src 'self' https://twitch-widget-token-request.undeservednull.workers.dev https://api.twitch.tv wss://eventsub.wss.twitch.tv;
             script-src 'self' 'unsafe-eval';
             style-src 'self' 'unsafe-inline';
         `;
@@ -48,7 +48,7 @@
             default-src 'self';
             img-src 'self' data: blob:;
             media-src 'self' data: blob:;
-            connect-src 'self' http://localhost:* ws://localhost:* wss://localhost:* https://twitch-widget-token-request.undeservednull.workers.dev;
+            connect-src 'self' http://localhost:* ws://localhost:* wss://localhost:* https://twitch-widget-token-request.undeservednull.workers.dev https://api.twitch.tv wss://eventsub.wss.twitch.tv;
             script-src 'self' 'unsafe-eval';
             style-src 'self' 'unsafe-inline';
         `;
@@ -61,6 +61,7 @@
         };
     </script>
 </head>
+
 
 <body>
     <div id="app">

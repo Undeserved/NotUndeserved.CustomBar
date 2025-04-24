@@ -17,7 +17,7 @@
                       $"?client_id={clientId}" +
                       $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
                       $"&response_type=code" +
-                      $"&scope=chat:read+chat:edit+channel:read:redemptions+channel:manage:redemptions";
+                      $"&scope=chat:read+chat:edit+channel:read:redemptions";
 
         Nav.NavigateTo(authUrl, forceLoad: true);
     }
