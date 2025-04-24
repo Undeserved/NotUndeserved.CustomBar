@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "NotUndeserved.Twitch.CustomProgBar",
   "resources": {
-    "hash": "sha256-03OolhADm9h7HEoxcd8b8w+l57ZDivjQNXG+uQkPszA=",
+    "hash": "sha256-luE7/sZ0VZfaSbzi4QbqE73KmuyMDnVOPwy5vsHCONs=",
     "jsModuleNative": {
       "dotnet.native.8.0.15.l5bze06whq.js": "sha256-ftpNqtARtVNE8ku5eB/jXoklb41UQ+EutUHfwmbNTBY="
     },
@@ -38,7 +38,7 @@
       "Microsoft.JSInterop.wasm": "sha256-uexob0+0AvnOeqMKkUPUWtuRoYG3RUrCvSoNRlARIa8=",
       "Microsoft.JSInterop.WebAssembly.wasm": "sha256-fd2zbkEmDMKwxoRxT9i0gm7xndmnlJJ2YhJ8QaAE1RU=",
       "netstandard.wasm": "sha256-ZHHjnObLqoiR4bLA0uRsZhFKK2MWNOOW2Aef5Dzellk=",
-      "NotUndeserved.Twitch.CustomProgBar.wasm": "sha256-quSlRvXzP2sM7cJ5ckVG6nfpst3Dn+wp5QE+TvuySjU=",
+      "NotUndeserved.Twitch.CustomProgBar.wasm": "sha256-GAKE8O0w8GR8QH1UCx835ygcqFmb+TojgFwShYzdaFM=",
       "Polly.Extensions.Http.wasm": "sha256-bqX9l2dLJ0m0IilNsXvbO14i9Lx0oDeudAGIsS3kEAw=",
       "Polly.wasm": "sha256-nqtTJO4ORk0a9aj8aiYClicrbMc0aZVi3iA34o/Gznc=",
       "System.Collections.Concurrent.wasm": "sha256-OFS//vErD6/6RhM3XPrfMUoAU+nmXwiJrzH9Phybads=",
