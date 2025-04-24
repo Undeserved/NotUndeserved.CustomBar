@@ -231,3 +231,37 @@ export async function readFileAsDataUrl(inputElement) {
         reader.readAsDataURL(file);
     });
 }
+
+export function triggerFileInput(inputRef) {
+    const input = inputRef instanceof HTMLElement ? inputRef : document.querySelector(`[data-blazor-id='${inputRef.id}']`) || inputRef;
+    if (input && typeof input.click === "function") {
+        input.click();
+    } else {
+        console.warn("triggerFileInput: could not find or click input element.");
+    }
+}
+
+export function readTokenJson(input) {
+    return new Promise((resolve, reject) => {
+        const file = input.files[0];
+        if (!file) return reject("No file selected");
+
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsText(file);
+    });
+}
+
+export function downloadTokenJson(json) {
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "twitch_token_backup.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
