@@ -67,7 +67,7 @@
 
                         <div>
                             <label>Segments:</label>
-                            <input @bind="segments" class="nier-border" style="padding: 0.5rem; max-width: 155px; background: #A39C84;" />
+                            <input type="number" min="2" step="1" @bind="segments" class="nier-border" style="padding: 0.5rem; max-width: 155px; background: #A39C84;" />
                         </div>
                     </section>
                 } else if (selectedTab == "redemptions") {
@@ -171,7 +171,7 @@
         await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.RedemptionDecrease, redemptionDecrease);
         await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.RedemptionReset, redemptionReset);
 
-        await _eventSubModule.InvokeVoidAsync("dispatchForceLocalStorageUpdate"); 
+        StateHasChanged();
         await JS.InvokeVoidAsync("alert", "Settings saved.");
     }
 
@@ -214,7 +214,7 @@
             await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.TwitchTokenExpiresAt, token.ExpiresAt);
             await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.TwitchChannelName, token.ChannelName);
 
-            await _eventSubModule!.InvokeVoidAsync("dispatchForceLocalStorageUpdate");
+            StateHasChanged();
             await JS.InvokeVoidAsync("alert", "Token imported successfully.");
         } catch {
             await JS.InvokeVoidAsync("alert", "Failed to parse or import the token.");

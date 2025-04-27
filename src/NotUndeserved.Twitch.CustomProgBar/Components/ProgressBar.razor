@@ -104,12 +104,18 @@
 
     [JSInvokable]
     public async Task OnRedemptionReceived(string userName, string rewardTitle) {
+        string increase = (await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.RedemptionIncrease)).ToLower();
+        string decrease = (await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.RedemptionDecrease)).ToLower();
+        string reset = (await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.RedemptionReset)).ToLower();
+        string normalisedRewardTitle = rewardTitle.ToLower();
+
         Console.WriteLine($"Redemption received from {userName}: {rewardTitle}");
-        switch (rewardTitle)
-        {
-            //ALERTA ALERTA ALERTA
-            //Define channel reward interactions, maybe add a customisation option? ???: Increase, ???: Decrease, OwlNuke: Reset (maybe)
-            //ALERTA ALERTA ALERTA
+        if (normalisedRewardTitle == increase) {
+            ProgressState.IncreaseProgress();
+        } else if (normalisedRewardTitle == decrease) {
+            ProgressState.DecreaseProgress();
+        } else if (normalisedRewardTitle == reset) {
+            ProgressState.ResetProgress();
         }
         await InvokeAsync(StateHasChanged);
     }
