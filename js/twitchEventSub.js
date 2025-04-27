@@ -1,6 +1,5 @@
 ﻿let socket;
 let reconnectTimeout = null;
-let heartbeatInterval = null;
 let dotNetRef = null;
 let currentSessionId = null;
 let storageListener = null;
@@ -9,6 +8,7 @@ const recentRedemptionIds = new Set();
 const REDEMPTION_CACHE_DURATION = 60 * 1000; // 1 minute
 
 console.log("[twitchEventSub.js] Module loaded");
+
 export function startTwitchWebSocket(ref, token, clientId, broadcasterUserId) {
     dotNetRef = ref;
 
@@ -17,6 +17,7 @@ export function startTwitchWebSocket(ref, token, clientId, broadcasterUserId) {
     }
 
     socket = new WebSocket("wss://eventsub.wss.twitch.tv/ws");
+    //socket = new WebSocket("ws://localhost:8080/ws");
 
     socket.onopen = () => {
         console.log("[TwitchEventSub] WebSocket opened");
@@ -29,7 +30,6 @@ export function startTwitchWebSocket(ref, token, clientId, broadcasterUserId) {
             case "session_welcome":
                 currentSessionId = data.payload.session.id;
                 console.log("[TwitchEventSub] Session ID:", currentSessionId);
-                startHeartbeat();
                 subscribeToRewardRedemptions(currentSessionId, token, clientId, broadcasterUserId);
                 break;
 
@@ -59,7 +59,6 @@ export function startTwitchWebSocket(ref, token, clientId, broadcasterUserId) {
             case "session_reconnect":
                 const newUrl = data.payload.session.reconnect_url;
                 console.log("[TwitchEventSub] Reconnecting to", newUrl);
-                stopHeartbeat();
                 reconnectWebSocket(newUrl, token, clientId, broadcasterUserId);
                 break;
 
@@ -73,10 +72,13 @@ export function startTwitchWebSocket(ref, token, clientId, broadcasterUserId) {
         }
     };
 
-    socket.onclose = () => {
-        console.warn("[TwitchEventSub] WebSocket closed. Attempting to reconnect...");
-        stopHeartbeat();
-        reconnectTimeout = setTimeout(() => startTwitchWebSocket(ref, token, clientId, broadcasterUserId), 5000);
+    socket.onclose = (event) => {
+        console.warn("[TwitchEventSub] WebSocket closed.");
+        console.warn("Code:", event.code);
+        console.warn("Reason:", event.reason);
+        console.warn("Was clean:", event.wasClean);
+
+        reconnectTimeout = setTimeout(() => startTwitchWebSocket(dotNetRef, token, clientId, broadcasterUserId), 5000);
     };
 
     socket.onerror = (err) => {
@@ -94,19 +96,43 @@ function reconnectWebSocket(url, token, clientId, broadcasterUserId) {
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
 
-        if (data.metadata.message_type === "session_welcome") {
-            currentSessionId = data.payload.session.id;
-            startHeartbeat();
-            subscribeToRewardRedemptions(currentSessionId, token, clientId, broadcasterUserId);
-        } else {
-            // Reuse logic from the main onmessage handler
-            socket.onmessage({ data: JSON.stringify(data) });
+        switch (data.metadata.message_type) {
+            case "session_welcome":
+                currentSessionId = data.payload.session.id;
+                console.log("[TwitchEventSub] Reconnected session:", currentSessionId);
+                subscribeToRewardRedemptions(currentSessionId, token, clientId, broadcasterUserId);
+                break;
+
+            case "notification":
+                // same redemption logic as in startTwitchWebSocket
+                break;
+
+            case "session_keepalive":
+                console.log("[TwitchEventSub] Keepalive received (reconnect)");
+                break;
+
+            case "session_reconnect":
+                const newUrl = data.payload.session.reconnect_url;
+                console.log("[TwitchEventSub] Twitch instructed reconnect:", newUrl);
+                reconnectWebSocket(newUrl, token, clientId, broadcasterUserId);
+                break;
+
+            case "revocation":
+                console.warn("[TwitchEventSub] Subscription revoked (reconnect)", data.payload);
+                break;
+
+            default:
+                console.log("[TwitchEventSub] Message (reconnect):", data);
+                break;
         }
     };
 
-    socket.onclose = () => {
-        console.warn("[TwitchEventSub] WebSocket closed after reconnect. Attempting to reconnect...");
-        stopHeartbeat();
+    socket.onclose = (event) => {
+        console.warn("[TwitchEventSub] WebSocket closed after reconnect.");
+        console.warn("Code:", event.code);
+        console.warn("Reason:", event.reason);
+        console.warn("Was clean:", event.wasClean);
+
         reconnectTimeout = setTimeout(() => startTwitchWebSocket(dotNetRef, token, clientId, broadcasterUserId), 5000);
     };
 
@@ -115,25 +141,10 @@ function reconnectWebSocket(url, token, clientId, broadcasterUserId) {
     };
 }
 
-function startHeartbeat() {
-    stopHeartbeat();
-    heartbeatInterval = setInterval(() => {
-        if (socket && socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({ type: "PING" }));
-        }
-    }, 60_000);
-}
-
-function stopHeartbeat() {
-    if (heartbeatInterval) {
-        clearInterval(heartbeatInterval);
-        heartbeatInterval = null;
-    }
-}
-
 async function subscribeToRewardRedemptions(sessionId, token, clientId, broadcasterUserId) {
     try {
-        const response = await fetch("https://api.twitch.tv/helix/eventsub/subscriptions", {
+        const response = await fetch("https://api.twitch.tv/helix/eventsub/subscriptions", {        
+        //const response = await fetch("http://localhost:8080/eventsub/subscriptions", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -165,7 +176,6 @@ export function stopTwitchWebSocket() {
         socket.close();
         socket = null;
     }
-    stopHeartbeat();
     dotNetRef = null;
     if (reconnectTimeout) {
         clearTimeout(reconnectTimeout);
@@ -174,6 +184,7 @@ export function stopTwitchWebSocket() {
     console.log("[TwitchEventSub] Disconnected");
 }
 
+// Storage related functions remain unchanged below
 export function addStorageListener(ref) {
     dotNetRef = ref;
 
@@ -194,7 +205,6 @@ export function addStorageListener(ref) {
 }
 
 export function dispatchForceLocalStorageUpdate() {
-    // Trigger a manual storage event to simulate cross-tab sync (affects current tab too)
     window.dispatchEvent(new Event('forceLocalStorageUpdate'));
 }
 

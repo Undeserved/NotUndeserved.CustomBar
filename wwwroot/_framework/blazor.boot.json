@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "NotUndeserved.Twitch.CustomProgBar",
   "resources": {
-    "hash": "sha256-luE7/sZ0VZfaSbzi4QbqE73KmuyMDnVOPwy5vsHCONs=",
+    "hash": "sha256-xMzwU97K+0uuUhJRxSr8CKgXRR4Q5GcJDd0wOol4KqQ=",
     "jsModuleNative": {
       "dotnet.native.8.0.15.l5bze06whq.js": "sha256-ftpNqtARtVNE8ku5eB/jXoklb41UQ+EutUHfwmbNTBY="
     },
@@ -38,7 +38,7 @@
       "Microsoft.JSInterop.wasm": "sha256-uexob0+0AvnOeqMKkUPUWtuRoYG3RUrCvSoNRlARIa8=",
       "Microsoft.JSInterop.WebAssembly.wasm": "sha256-fd2zbkEmDMKwxoRxT9i0gm7xndmnlJJ2YhJ8QaAE1RU=",
       "netstandard.wasm": "sha256-ZHHjnObLqoiR4bLA0uRsZhFKK2MWNOOW2Aef5Dzellk=",
-      "NotUndeserved.Twitch.CustomProgBar.wasm": "sha256-GAKE8O0w8GR8QH1UCx835ygcqFmb+TojgFwShYzdaFM=",
+      "NotUndeserved.Twitch.CustomProgBar.wasm": "sha256-+vRksOxQQYkT7f42tAXfiXBZqjnd5K1CqSRRA17kQac=",
       "Polly.Extensions.Http.wasm": "sha256-bqX9l2dLJ0m0IilNsXvbO14i9Lx0oDeudAGIsS3kEAw=",
       "Polly.wasm": "sha256-nqtTJO4ORk0a9aj8aiYClicrbMc0aZVi3iA34o/Gznc=",
       "System.Collections.Concurrent.wasm": "sha256-OFS//vErD6/6RhM3XPrfMUoAU+nmXwiJrzH9Phybads=",
@@ -56,7 +56,7 @@
       "System.Net.Http.wasm": "sha256-XIVgP2mwALO8MNNMSAbUXrJ5kiql0e8oJ0zMzv84Kj4=",
       "System.Net.Primitives.wasm": "sha256-8ZWYuLg0pmFOHG/yivISF7mfMgRN93tuk2/T8IkDkEw=",
       "System.ObjectModel.wasm": "sha256-oAaA6comt93rvUYiXFr/xkUjkv0uXWNgHXXP2YNCr8o=",
-      "System.Private.CoreLib.wasm": "sha256-ZR+B6OHFvpC1m0WPxmiEV+caZEIbNdG2YYy80UlvEyo=",
+      "System.Private.CoreLib.wasm": "sha256-ltwCnO/qa3vRFJlsfw1+9imPTNnIVdtY8VPkliFqgv0=",
       "System.Private.Uri.wasm": "sha256-iljIB5TKOPb10qNp0DtBWa5ngJvh2CMYA9coMfh2h24=",
       "System.Runtime.InteropServices.JavaScript.wasm": "sha256-ztXzc7ufqw28jhHoyLr1SqRrRpZ+dYqlPxeiahcsD8g=",
       "System.Runtime.wasm": "sha256-0gE9/1nZzwQfdHHCuNoCfSEsdwPWGLpMyCrKksRjrAQ=",
