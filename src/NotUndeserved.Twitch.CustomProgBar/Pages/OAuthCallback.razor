@@ -1,8 +1,9 @@
 ﻿@page "/oauth-callback"
+@using NotUndeserved.Twitch.CustomProgBar.Application.Common
 
 @inject NavigationManager Navigation
 @inject HttpClient Http
-@inject Application.Common.AppConfig AppConfig
+@inject AppConfig AppConfig
 
 <p>@statusMessage</p>
 
@@ -30,7 +31,7 @@
                 statusMessage = "Authenticated successfully!";
 
                 // Save to localStorage
-                await JS.InvokeVoidAsync("localStorage.setItem", "twitch_access_token", json.access_token);
+                await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.TwitchAccessToken, json.access_token);
             } else {
                 statusMessage = $"Token exchange failed: {response.StatusCode} , it's  over.";
             }
