@@ -6,10 +6,56 @@ let storageListener = null;
 
 const recentRedemptionIds = new Set();
 const REDEMPTION_CACHE_DURATION = 60 * 1000; // 1 minute
+const LOCK_KEY = "eventsub-lock";
+const LOCK_TTL = 10000; // 10 seconds
+const HEARTBEAT_INTERVAL = 5000; // 5 seconds
+
 
 console.log("[twitchEventSub.js] Module loaded");
 
 export function startTwitchWebSocket(ref, token, clientId, broadcasterUserId) {
+    const instanceId = crypto.randomUUID(); // Unique per tab
+    let heartbeatInterval = null;
+
+    function tryAcquireLock() {
+        const raw = localStorage.getItem(LOCK_KEY);
+        const now = Date.now();
+
+        if (!raw) {
+            localStorage.setItem(LOCK_KEY, JSON.stringify({ id: instanceId, timestamp: now }));
+            return true;
+        }
+
+        try {
+            const parsed = JSON.parse(raw);
+            if (now - parsed.timestamp > LOCK_TTL) {
+                console.warn("[EventSub] Lock stale. Taking over.");
+                localStorage.setItem(LOCK_KEY, JSON.stringify({ id: instanceId, timestamp: now }));
+                return true;
+            }
+
+            return parsed.id === instanceId;
+        } catch {
+            return false;
+        }
+    }
+
+    if (!tryAcquireLock()) {
+        console.log("[EventSub] Lock held by another instance. Skipping WebSocket setup.");
+        return;
+    }
+
+    heartbeatInterval = setInterval(() => {
+        const raw = localStorage.getItem(LOCK_KEY);
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed.id === instanceId) {
+                parsed.timestamp = Date.now();
+                localStorage.setItem(LOCK_KEY, JSON.stringify(parsed));
+            }
+        }
+    }, HEARTBEAT_INTERVAL);
+
     dotNetRef = ref;
 
     if (socket) {
@@ -34,22 +80,7 @@ export function startTwitchWebSocket(ref, token, clientId, broadcasterUserId) {
                 break;
 
             case "notification":
-                if (data.payload.subscription.type === "channel.channel_points_custom_reward_redemption.add") {
-                    const redemption = data.payload.event;
-                    const id = redemption.id;
-
-                    if (!recentRedemptionIds.has(id)) {
-                        recentRedemptionIds.add(id);
-                        setTimeout(() => recentRedemptionIds.delete(id), REDEMPTION_CACHE_DURATION);
-
-                        console.log("[TwitchEventSub] Redemption received:", redemption);
-                        if (dotNetRef) {
-                            dotNetRef.invokeMethodAsync("OnRedemptionReceived", redemption.user_name, redemption.reward.title);
-                        }
-                    } else {
-                        console.log("[TwitchEventSub] Duplicate redemption ignored:", id);
-                    }
-                }
+                handleRedemption(data); 
                 break;
 
             case "session_keepalive":
@@ -84,6 +115,19 @@ export function startTwitchWebSocket(ref, token, clientId, broadcasterUserId) {
     socket.onerror = (err) => {
         console.error("[TwitchEventSub] Error:", err);
     };
+
+    window.addEventListener("beforeunload", () => {
+        const raw = localStorage.getItem(LOCK_KEY);
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed.id === instanceId) {
+                localStorage.removeItem(LOCK_KEY);
+            }
+        }
+        if (heartbeatInterval) {
+            clearInterval(heartbeatInterval);
+        }
+    });
 }
 
 function reconnectWebSocket(url, token, clientId, broadcasterUserId) {
@@ -104,7 +148,7 @@ function reconnectWebSocket(url, token, clientId, broadcasterUserId) {
                 break;
 
             case "notification":
-                // same redemption logic as in startTwitchWebSocket
+                handleRedemption(data); 
                 break;
 
             case "session_keepalive":
@@ -139,6 +183,25 @@ function reconnectWebSocket(url, token, clientId, broadcasterUserId) {
     socket.onerror = (err) => {
         console.error("[TwitchEventSub] Error during reconnect:", err);
     };
+}
+
+function handleRedemption(data) {
+    if (data.payload.subscription.type === "channel.channel_points_custom_reward_redemption.add") {
+        const redemption = data.payload.event;
+        const id = redemption.id;
+
+        if (!recentRedemptionIds.has(id)) {
+            recentRedemptionIds.add(id);
+            setTimeout(() => recentRedemptionIds.delete(id), REDEMPTION_CACHE_DURATION);
+
+            console.log("[TwitchEventSub] Redemption received:", redemption);
+            if (dotNetRef) {
+                dotNetRef.invokeMethodAsync("OnRedemptionReceived", redemption.user_name, redemption.reward.title);
+            }
+        } else {
+            console.log("[TwitchEventSub] Duplicate redemption ignored:", id);
+        }
+    }
 }
 
 async function subscribeToRewardRedemptions(sessionId, token, clientId, broadcasterUserId) {
@@ -184,7 +247,7 @@ export function stopTwitchWebSocket() {
     console.log("[TwitchEventSub] Disconnected");
 }
 
-// Storage related functions remain unchanged below
+//Storage handling functions
 export function addStorageListener(ref) {
     dotNetRef = ref;
 
