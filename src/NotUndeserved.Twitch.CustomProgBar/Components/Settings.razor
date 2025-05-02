@@ -4,14 +4,77 @@
 @inject IJSRuntime JS
 @inject NavigationManager Nav
 
+<style>
+    .top-menu {
+    display: flex;
+    gap: 1rem;
+    background-color: #4D493E;
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid #aaa;
+    }
+
+    .menu-item {
+    position: relative;
+    }
+
+    .menu-button {
+    background: none;
+    border: none;
+    color: #ccc;
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    }
+
+    .menu-button.active {
+    color: #fff;
+    border-bottom: 2px solid #fff;
+    }
+
+    .submenu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: #4D493E;
+    border: 1px solid #888;
+    z-index: 10;
+    }
+
+    .menu-item:hover .submenu {
+    display: block;
+    }
+
+    .submenu button {
+    display: block;
+    width: 100%;
+    background: none;
+    border: none;
+    color: #ccc;
+    padding: 0.5rem 1rem;
+    text-align: left;
+    }
+
+    .submenu button:hover {
+    background-color: #444;
+    color: #fff;
+    }
+</style>
+
 <main>
     <div class="container" style="display: flex; gap: 2rem; flex-wrap: wrap;">
-        <div class="content" style="flex: 1; min-width: 300px; min-height: 460px; display: flex; flex-direction: column;">
+        <div class="content" style="flex: 1; min-width: 300px; min-height: 512px; display: flex; flex-direction: column;">
 
-            <div class="tabs nier-border">
-                <button @onclick="@(() => selectedTab = "oauth")" class="tab-button @(selectedTab == "oauth" ? "active" : "")">OAuth</button>
-                <button @onclick="@(() => selectedTab = "graphics")" class="tab-button @(selectedTab == "graphics" ? "active" : "")">Graphics</button>
-                <button @onclick="@(() => selectedTab = "redemptions")" class="tab-button @(selectedTab == "redemptions" ? "active" : "")">Redemptions</button>
+            <div class="top-menu nier-border">
+                <div class="menu-item">
+                    <button class="menu-button @(selectedTab == "oauth" ? "active" : "")" @onclick="@(() => selectedTab = "oauth")">OAuth</button>
+                </div>
+                <div class="menu-item">
+                    <button class="menu-button @(selectedTab == "graphics" ? "active" : "")" @onclick="@(() => selectedTab = "graphics")">Graphics</button>
+                </div>
+                <div class="menu-item">
+                    <button class="menu-button @(selectedTab == "redemptions" ? "active" : "")" @onclick="@(() => selectedTab = "redemptions")">Redemptions</button>
+                </div>
             </div>
 
             <div style="flex: 1; display: flex; flex-direction: column;">
@@ -22,29 +85,31 @@
                         <div style="margin-bottom: 1rem;">
                             <label>Access Token:</label>
                             <button type="button" @onclick="RequestNewToken" style="margin-left: 1rem;">Request access token</button><br />
-                            <label class="block nier-border" style="display: block; padding: 1rem;">
-                                @(!string.IsNullOrEmpty(accessToken) ? accessToken : "(No token available)")
+                            <label class="block nier-border" style="display: block; padding: 1rem; font-weight: bold;">
+                                @{
+                                    var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                                    var tokenStatus = string.IsNullOrEmpty(accessToken)
+                                    ? "[No token available]"
+                                    : (expiresAt > now ? "[Token active]" : "[Token expired]");
+                                }
+                                @tokenStatus
                             </label>
                         </div>
 
                         <div style="margin-bottom: 1rem;">
                             <label>Expires At:</label><br />
-                            <label class="block nier-border" style="display: block; padding: 1rem;">
+                            <label class="block nier-border" style="display: block; padding: 1rem; font-weight: bold;">
                                 @(expiresAt > 0
-                                    ? DateTimeOffset.FromUnixTimeMilliseconds(expiresAt).ToLocalTime().ToString("f")
-                                    : "Unknown")
+                                                ? DateTimeOffset.FromUnixTimeMilliseconds(expiresAt).ToLocalTime().ToString("f")
+                                                : "(Undefined)")
                             </label>
                         </div>
 
                         <div style="margin-bottom: 1rem;">
                             <label>Channel Name:</label><br />
-                            <input @bind="channelName" class="nier-border" style="padding: 0.5rem; max-width: 300px; background: #A39C84;" />
-                        </div>
-
-                        <div style="margin-top: 1rem;">
-                            <button @onclick="ExportToken" class="nier-border" style="padding: 0.5rem;">Export Token</button>
-                            <button @onclick="TriggerImport" style="margin-left: 1rem;">Import Token</button>
-                            <input type="file" @ref="importFileRef" @onchange="ImportToken" style="display: none;" />
+                            <label class="block nier-border" style="display: block; padding: 1rem; font-weight: bold;">
+                                @(!string.IsNullOrEmpty(channelName) ? channelName : "(Undefined)")
+                            </label>
                         </div>
                     </section>
                 } else if (selectedTab == "graphics") {
@@ -54,15 +119,15 @@
                         <div style="margin-bottom: 1rem;">
                             <label>Custom Bar:</label><br />
                             <input type="file" @ref="_imageInputRef" @onchange="OnWidgetImageChanged"
-                                   class="nier-border"
-                                   style="padding: 0.5rem; background: #A39C84;" />
+                            class="nier-border"
+                            style="padding: 0.5rem; background: #A39C84;" />
                         </div>
 
                         <div style="margin-bottom: 1rem;">
                             <label>Custom Dial:</label><br />
                             <input type="file" @ref="_dialInputRef" @onchange="OnDialImageChanged"
-                                   class="nier-border"
-                                   style="padding: 0.5rem; background: #A39C84;" />
+                            class="nier-border"
+                            style="padding: 0.5rem; background: #A39C84;" />
                         </div>
 
                         <div>
@@ -91,6 +156,9 @@
 
             <div style="padding-top: 1rem;">
                 <button type="button" @onclick="SaveSettings" style="padding: 0.5rem;">Save settings</button>
+                <button type="button" @onclick="ExportToken" style="padding: 0.5rem;">Export settings</button>
+                <button type="button" @onclick="TriggerImport" style="padding: 0.5rem;">Import settings</button>
+                <input type="file" @ref="importFileRef" @onchange="ImportToken" style="display: none;" />
             </div>
         </div>
     </div>
@@ -116,8 +184,11 @@
 
     protected override async Task OnInitializedAsync() {
         _eventSubModule = await JS.InvokeAsync<IJSObjectReference>("import", "./js/twitchEventSub.js");
-        accessToken = await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.TwitchAccessToken);
+        await PullDataFromLocalStorage();
+    }
 
+    private async Task PullDataFromLocalStorage() {
+        accessToken = await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.TwitchAccessToken);
         var expiresAtStr = await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.TwitchTokenExpiresAt);
         var storedChannel = await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.TwitchChannelName);
         var storedImage = await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.CustomBarImage);
@@ -143,7 +214,7 @@
 
         if (!string.IsNullOrWhiteSpace(storedDialImg)) {
             dialDataUrl = storedDialImg;
-        }
+        }        
     }
 
     private async Task OnWidgetImageChanged(ChangeEventArgs e) {
@@ -163,7 +234,6 @@
     }
 
     private async Task SaveSettings() {
-        await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.TwitchChannelName, channelName);
         await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.CustomBarImage, imageDataUrl);
         await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.CustomDialImage, dialDataUrl);
         await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.CustomWidgetSegments, Math.Max(segments, 2).ToString());
@@ -171,7 +241,7 @@
         await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.RedemptionDecrease, redemptionDecrease);
         await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.RedemptionReset, redemptionReset);
 
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
         await JS.InvokeVoidAsync("alert", "Settings saved.");
     }
 
@@ -184,12 +254,24 @@
         var refresh = await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.TwitchRefreshToken);
         var expires = await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.TwitchTokenExpiresAt);
         var channel = await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.TwitchChannelName);
+        var barImage = await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.CustomBarImage);
+        var dialImage = await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.CustomDialImage);
+        var segments = await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.CustomWidgetSegments);
+        var increase = await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.RedemptionIncrease);
+        var decrease = await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.RedemptionDecrease);
+        var reset = await JS.InvokeAsync<string>("localStorage.getItem", LocalResources.RedemptionReset);
 
-        var export = new OAuthTokenDto {
+        var export = new SettingsDto {
                 AccessToken = access ?? "",
                 RefreshToken = refresh ?? "",
                 ExpiresAt = expires ?? "",
-                ChannelName = channel ?? ""
+                ChannelName = channel ?? "",
+                CustomBarUrl = barImage ?? "",
+                CustomDialUrl = dialImage ?? "",
+                BarSegments = segments ?? "",
+                RedemptionIncrease = increase ?? "",
+                RedemptionDecrease = decrease ?? "",
+                RedemptionReset = reset ?? ""
             };
 
         var json = JsonSerializer.Serialize(export);
@@ -203,7 +285,7 @@
     private async Task ImportToken(ChangeEventArgs e) {
         var json = await _eventSubModule!.InvokeAsync<string>("readTokenJson", importFileRef);
         try {
-            var token = JsonSerializer.Deserialize<OAuthTokenDto>(json);
+            var token = JsonSerializer.Deserialize<SettingsDto>(json);
             if (token is null) {
                 await JS.InvokeVoidAsync("alert", "Invalid token file.");
                 return;
@@ -213,8 +295,16 @@
             await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.TwitchRefreshToken, token.RefreshToken);
             await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.TwitchTokenExpiresAt, token.ExpiresAt);
             await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.TwitchChannelName, token.ChannelName);
+            await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.CustomBarImage, token.CustomBarUrl);
+            await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.CustomDialImage, token.CustomDialUrl); 
+            await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.CustomWidgetSegments, token.BarSegments);
+            await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.RedemptionIncrease, token.RedemptionIncrease);
+            await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.RedemptionDecrease, token.RedemptionDecrease);
+            await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.RedemptionReset, token.RedemptionReset);
 
-            StateHasChanged();
+            await PullDataFromLocalStorage();
+
+            await InvokeAsync(StateHasChanged);
             await JS.InvokeVoidAsync("alert", "Token imported successfully.");
         } catch {
             await JS.InvokeVoidAsync("alert", "Failed to parse or import the token.");

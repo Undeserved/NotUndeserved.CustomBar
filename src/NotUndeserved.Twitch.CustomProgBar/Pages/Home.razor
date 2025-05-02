@@ -30,51 +30,60 @@
 
 @if (!isEmbedded)
 {
-    <header>
-        <div class="pattern">
-            <div class="container">
-                <div class="pattern-inner"></div>
+    <div class="container" style="display: flex; align-items: flex-start; gap: 2rem;">
+        <!-- SYSTEM MENU (left) -->
+        <div style="flex: 1; min-width: 320px;">
+            <header>
+                <div class="pattern">
+                    <div class="container">
+                        <div class="pattern-inner"></div>
+                    </div>
+                </div>
+
+                <div class="container">
+                    <h1>
+                        <span>SYSTEM</span>
+                    </h1>
+                </div>
+            </header>
+
+            <NotUndeserved.Twitch.CustomProgBar.Components.Settings />
+        </div>
+
+        <!-- UI SECTION (right) -->
+        <div style="flex: 1;">
+            <header>
+                <div class="pattern">
+                    <div class="container">
+                        <div class="pattern-inner"></div>
+                    </div>
+                </div>
+
+                <div class="container">
+                    <h1>
+                        <span>UI</span>
+                    </h1>
+                </div>
+            </header>
+
+            <div class="container" style="display: flex; gap: 2rem; align-items: flex-start;">
+                <div class="content" style="flex-shrink: 0;">
+                    <NotUndeserved.Twitch.CustomProgBar.Components.ProgressBar />
+                </div>
+                <div class="content">
+                    <NotUndeserved.Twitch.CustomProgBar.Components.ManualControls />
+                </div>
             </div>
-        </div>
-
-        <div class="container">
-            <h1>
-                <span>SYSTEM</span>
-            </h1>
-        </div>
-    </header>
-
-    <NotUndeserved.Twitch.CustomProgBar.Components.Settings />
-
-    <header>
-        <div class="pattern">
-            <div class="container">
-                <div class="pattern-inner"></div>
-            </div>
-        </div>
-
-        <div class="container">
-            <h1>
-                <span>UI</span>
-            </h1>
-        </div>
-    </header>
-
-    <div class="container" style="display: flex; gap: 2rem; align-items: flex-start;">
-        <div class="content" style="flex-shrink: 0;">
-            <NotUndeserved.Twitch.CustomProgBar.Components.ProgressBar />
-        </div>
-        <div class="content">
-            <NotUndeserved.Twitch.CustomProgBar.Components.ManualControls />
         </div>
     </div>
 
-
+    <!-- Footer Pattern -->
     <div class="pattern">
         <div class="container">
             <div class="pattern-inner"></div>
         </div>
     </div>
+
 }
 else {
     <NotUndeserved.Twitch.CustomProgBar.Components.ProgressBar />
