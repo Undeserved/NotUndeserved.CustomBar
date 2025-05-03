@@ -44,8 +44,37 @@ export default {
         })
       });
 
-      const data = await tokenResponse.json();
-      return new Response(JSON.stringify(data), {
+      const tokenData = await tokenResponse.json();
+      if (!tokenData.access_token) {
+        return new Response(JSON.stringify(tokenData), {
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*"
+          },
+          status: 400
+        });
+      }
+
+      const userResponse = await fetch("https://api.twitch.tv/helix/users", {
+        headers: {
+          "Authorization": `Bearer ${tokenData.access_token}`,
+          "Client-Id": env.TWITCH_CLIENT_ID
+        }
+      });
+
+      const userData = await userResponse.json();
+      const login = userData.data?.[0]?.login ?? null;
+
+      const result = {
+        access_token: tokenData.access_token,
+        refresh_token: tokenData.refresh_token,
+        expires_in: tokenData.expires_in,
+        scope: tokenData.scope,
+        token_type: tokenData.token_type,
+        login: login
+      };
+
+      return new Response(JSON.stringify(result), {
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*"

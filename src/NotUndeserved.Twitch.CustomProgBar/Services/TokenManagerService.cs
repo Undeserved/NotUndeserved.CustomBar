@@ -10,30 +10,19 @@ namespace NotUndeserved.Twitch.CustomProgBar.Services {
     public class TokenManagerService : ITokenManagerService {
         private readonly HttpClient _http;
         private readonly IJSRuntime _js;
-        private readonly AppConfig _appConfig;
 
         private readonly TimeSpan RefreshWindow = TimeSpan.FromMinutes(10);
 
         public event Action<TokenData>? TokenRefreshed;
 
-        public TokenManagerService(HttpClient http, IJSRuntime js, AppConfig appConfig) {
+        public TokenManagerService(HttpClient http, IJSRuntime js) {
             _http = http;
             _js = js;
-            _appConfig = appConfig;
         }
 
         public async Task<TokenData?> GetTokenAsync() {
             var tokenData = await GetTokenFromStorageAsync();
             if (tokenData == null) return null;
-
-            var storedChannelName = await _js.InvokeAsync<string>("localStorage.getItem", LocalResources.TwitchChannelName);
-
-            if (!string.IsNullOrWhiteSpace(tokenData.AccessToken) && string.IsNullOrWhiteSpace(storedChannelName)) {
-                var channelName = await GetChannelNameAsync(tokenData.AccessToken);
-                if (channelName != null) {
-                    await _js.InvokeVoidAsync("localStorage.setItem", LocalResources.TwitchChannelName, channelName);
-                }
-            }
 
             if (DateTime.UtcNow > tokenData.ExpiresAt - RefreshWindow) {
                 return await RefreshTokenAsync(tokenData.RefreshToken);
@@ -88,25 +77,6 @@ namespace NotUndeserved.Twitch.CustomProgBar.Services {
                 await SaveTokenAsync(newToken);
                 TokenRefreshed?.Invoke(newToken);
                 return newToken;
-            } catch {
-                return null;
-            }
-        }
-
-        private async Task<string> GetChannelNameAsync(string accessToken) {
-            try {
-                var request = new HttpRequestMessage(HttpMethod.Get, "https://api.twitch.tv/helix/users");
-                request.Headers.Add("Authorization", $"Bearer {accessToken}");
-                request.Headers.Add("Client-Id", _appConfig.TwitchClientId);
-
-                var response = await _http.SendAsync(request);
-                response.EnsureSuccessStatusCode();
-
-                var json = await response.Content.ReadAsStringAsync();
-                using var doc = JsonDocument.Parse(json);
-
-                var login = doc.RootElement.GetProperty("data")[0].GetProperty("login").GetString();
-                return login;
             } catch {
                 return null;
             }
