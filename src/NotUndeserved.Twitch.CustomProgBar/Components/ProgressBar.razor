@@ -53,8 +53,10 @@
 
     private double DialTopPosition =>
     ProgressState.Sections > 0
-        ? Math.Max(100 - ProgressState.FillPercentage - (100.0 / (2 * ProgressState.Sections)) - 3.125, 0)
-        : 0;
+    ? Math.Max(
+        100.0 - ((ProgressState.CurrentStep - 0.5) * (100.0 / ProgressState.Sections)) - 3.125,
+        0)
+    : 0;
 
     protected override async Task OnInitializedAsync() {
         await ProgressState.InitialiseAsync();

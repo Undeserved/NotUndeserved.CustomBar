@@ -9,16 +9,16 @@ namespace NotUndeserved.Twitch.CustomProgBar.Components.State {
 
         public event Action? OnProgressUpdated;
 
-        private const double DefaultSegments = 8;
-        private const double MaxValue = 100;
-        private const double MinValue = 0;
-        private double _fillPercentage = 0;
-        private double _step;
-        public double Sections { get; private set; }
-        public double FillPercentage {
-            get => _fillPercentage;
+        private const int DefaultSegments = 8;
+        private int _segmentCount;
+        private int _currentSegment;
+        private const int _firstSegment = 1;
+
+        public int Sections => _segmentCount;
+        public int CurrentStep {
+            get => _currentSegment;
             private set {
-                _fillPercentage = Math.Max(Math.Min(value, MaxValue), MinValue);
+                _currentSegment = Math.Max(Math.Min(value, _segmentCount), _firstSegment);
                 OnProgressUpdated?.Invoke();
             }
         }
@@ -32,15 +32,14 @@ namespace NotUndeserved.Twitch.CustomProgBar.Components.State {
             var sectionsStr = await _js.InvokeAsync<string>("localStorage.getItem", LocalResources.CustomWidgetSegments);
             var fillStr = await _js.InvokeAsync<string>("localStorage.getItem", LocalResources.FillPercentage);
 
-            if (!double.TryParse(sectionsStr, out double parsedSegments) || parsedSegments <= 2)
+            if (!int.TryParse(sectionsStr, out int parsedSegments) || parsedSegments <= 2)
                 parsedSegments = DefaultSegments;
 
-            if (!double.TryParse(fillStr, out double parsedFill))
+            if (!int.TryParse(fillStr, out int parsedFill))
                 parsedFill = 0;
 
-            Sections = parsedSegments;
-            FillPercentage = parsedFill;
-            _step = MaxValue / Sections;
+            _segmentCount = parsedSegments;
+            CurrentStep = parsedFill;
 
             await SyncToLocalStorage();
 
@@ -50,40 +49,39 @@ namespace NotUndeserved.Twitch.CustomProgBar.Components.State {
 
         [JSInvokable]
         public void OnStorageChanged(string key, string? newValue) {
-            if (key == LocalResources.FillPercentage && double.TryParse(newValue, out var f)) {
-                FillPercentage = f;
-            } else if (key == LocalResources.CustomWidgetSegments && double.TryParse(newValue, out var s)) {
-                Sections = s;
-                _step = MaxValue / Sections;
+            if (key == LocalResources.FillPercentage && int.TryParse(newValue, out int f)) {
+                _currentSegment = f;
+            } else if (key == LocalResources.CustomWidgetSegments && int.TryParse(newValue, out int s)) {
+                _segmentCount = s;
                 OnProgressUpdated?.Invoke();
             }
         }
 
         public async Task SetSectionsAsync(int value) {
-            Sections = value;
+            _segmentCount = value;
             await SyncToLocalStorage();
             OnProgressUpdated?.Invoke();
         }
 
         private async Task SyncToLocalStorage() {
             if (_js != null) {
-                await _js.InvokeVoidAsync("localStorage.setItem", LocalResources.FillPercentage, FillPercentage.ToString());
+                await _js.InvokeVoidAsync("localStorage.setItem", LocalResources.FillPercentage, CurrentStep.ToString());
                 await _js.InvokeVoidAsync("localStorage.setItem", LocalResources.CustomWidgetSegments, Sections.ToString());
             }
         }
 
         public void IncreaseProgress() {
-            FillPercentage += _step;
+            CurrentStep++;
             _ = SyncToLocalStorage();
         }
 
         public void DecreaseProgress() {
-            FillPercentage -= _step;
+            CurrentStep--;
             _ = SyncToLocalStorage();
         }
 
         public void ResetProgress() {
-            FillPercentage = MinValue;
+            CurrentStep = _firstSegment;
             _ = SyncToLocalStorage();
         }
 
