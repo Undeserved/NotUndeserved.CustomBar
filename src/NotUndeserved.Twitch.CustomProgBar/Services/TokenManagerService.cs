@@ -26,6 +26,15 @@ namespace NotUndeserved.Twitch.CustomProgBar.Services {
             var tokenData = await GetTokenFromStorageAsync();
             if (tokenData == null) return null;
 
+            var storedChannelName = await _js.InvokeAsync<string>("localStorage.getItem", LocalResources.TwitchChannelName);
+
+            if (!string.IsNullOrWhiteSpace(tokenData.AccessToken) && string.IsNullOrWhiteSpace(storedChannelName)) {
+                var channelName = await GetChannelNameAsync(tokenData.AccessToken);
+                if (channelName != null) {
+                    await _js.InvokeVoidAsync("localStorage.setItem", LocalResources.TwitchChannelName, channelName);
+                }
+            }
+
             if (DateTime.UtcNow > tokenData.ExpiresAt - RefreshWindow) {
                 return await RefreshTokenAsync(tokenData.RefreshToken);
             }
@@ -37,8 +46,6 @@ namespace NotUndeserved.Twitch.CustomProgBar.Services {
             await _js.InvokeVoidAsync("localStorage.setItem", LocalResources.TwitchAccessToken, token.AccessToken);
             await _js.InvokeVoidAsync("localStorage.setItem", LocalResources.TwitchRefreshToken, token.RefreshToken);
             await _js.InvokeVoidAsync("localStorage.setItem", LocalResources.TwitchTokenExpiresAt, ((DateTimeOffset)token.ExpiresAt).ToUnixTimeMilliseconds().ToString());
-            string channelName = await GetChannelNameAsync(token.AccessToken) ?? string.Empty;
-            await _js.InvokeVoidAsync("localStorage.setItem", LocalResources.TwitchChannelName, channelName);
         }
 
         public async Task<TokenData?> GetTokenFromStorageAsync() {
