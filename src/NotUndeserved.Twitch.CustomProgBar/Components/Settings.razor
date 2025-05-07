@@ -237,12 +237,15 @@
         await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.CustomBarImage, imageDataUrl);
         await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.CustomDialImage, dialDataUrl);
         await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.CustomWidgetSegments, Math.Max(segments, 2).ToString());
+        await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.FillPercentage, "1");
         await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.RedemptionIncrease, redemptionIncrease);
         await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.RedemptionDecrease, redemptionDecrease);
         await JS.InvokeVoidAsync("localStorage.setItem", LocalResources.RedemptionReset, redemptionReset);
 
         await InvokeAsync(StateHasChanged);
+
         await JS.InvokeVoidAsync("alert", "Settings saved.");
+        await JS.InvokeVoidAsync("location.reload");
     }
 
     private void RequestNewToken() {
