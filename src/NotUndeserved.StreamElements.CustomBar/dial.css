@@ -1,0 +1,12 @@
+#dial-image {
+  position: absolute;
+  left: 16px;
+  width: 32px;
+  height: 32px;
+  transition: top 0.3s ease;
+  background-color: transparent;
+  box-shadow: none;
+  top: 0%;
+  z-index: 2;
+  pointer-events: none;
+}

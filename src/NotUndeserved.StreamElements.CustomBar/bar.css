@@ -1,0 +1,12 @@
+#bar-container {
+  position: relative;
+  width: 64px;
+  height: 512px;
+  background-color: transparent;
+}
+
+#bar-image {
+  width: 64px;
+  height: 512px;
+  background-color: transparent;
+}
